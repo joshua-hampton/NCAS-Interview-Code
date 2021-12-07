@@ -8,7 +8,7 @@ Created as requirement for interview for NCAS Data Specialist
 ### Requirements ###
 * Python >= 3.6
 * Python modules:
-    * Numpy
+    * numpy
     * netCDF4
     * pandas
     * time
