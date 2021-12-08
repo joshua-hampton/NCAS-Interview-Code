@@ -5,7 +5,22 @@ import time as t
 import argparse
 
 
-def make_netcdf(in_file, out_file = 'ozone_box_interview_data.nc', skiprows = 5):
+def make_ozone_netcdf(in_file, out_file = 'ozone_box_interview_data.nc', skiprows = 5, expected_format = True):
+    """
+    Takes CSV file provided for NCAS interview and converts into netCDF.
+    Input options
+     in_file         - string. Input CSV file. Required.
+     out_file        - string. Name of output CSV file. Default ozone_box_interview_data.
+     skiprows        - integer. Number of rows at top of csv before headers for data. 
+                         Data in top rows used for attributes, see expected_format below. Default 5.
+     expected_format - bool. If top rows are in expected format, use data for global attributes.
+                         Expected format is: top row - instrument name, second row - contact name, 
+                                             third row - description, fourth row - creator.
+                         If false, attributes are ommited with the exception of a default title, 
+                         Ozone Concentration Data. Default true.
+    Output
+     netcdf file, written to out_file.
+    """
     # open file to get data at top of file
     with open(in_file, 'r') as f:
         header = [next(f).strip('\n') for x in range(skiprows)]
@@ -31,11 +46,14 @@ def make_netcdf(in_file, out_file = 'ozone_box_interview_data.nc', skiprows = 5)
 
     # create netcdf file, add global attributes
     nc_file = Dataset(out_file, 'w', format='NETCDF4_CLASSIC')
-    nc_file.title = 'Ozone Box Unit 1 Data'
-    nc_file.instrument_name = header[0]
-    nc_file.contact = header[1]
-    nc_file.description = header[2]
-    nc_file.creator = header[3]
+    if expected_format:
+        nc_file.title = f'{header[0]} Data'
+        nc_file.instrument_name = header[0]
+        nc_file.contact = header[1]
+        nc_file.description = header[2]
+        nc_file.creator = header[3]
+    else:
+        nc_file.title = 'Ozone Concentration Data'
     nc_file.history = f"Created at {t.strftime('%Y-%m-%d %H:%M:%S')}"
     nc_file.start_time = f'{start_data_date} {start_data_time}Z'
     nc_file.end_time = f'{end_data_date} {end_data_time}Z'
@@ -66,11 +84,10 @@ def make_netcdf(in_file, out_file = 'ozone_box_interview_data.nc', skiprows = 5)
 
 
 if __name__ == "__main__":
+    # if script run from command line, parse options and make netcdf file
     parser = argparse.ArgumentParser(description='Convert csv file to netcdf file.')
     parser.add_argument('input_file', type = str, help = 'Name of CSV file to convert')
-    parser.add_argument('-o', '--outfile', type = str, help = 'Name of netCDF file to be created. If not given, the name of the input file will be used for the netCDF file.')
+    parser.add_argument('-o', '--outfile', type = str, default = 'ozone_box_interview_data.nc', help = 'Name of netCDF file to be created. Default is ozone_box_interview_data.nc')
     parser.add_argument('-s', '--skiprows', type = int, default = 5, help = 'Number of rows in input file to skip before data headers. Default = 5')
     args = parser.parse_args()
-    if args.outfile == None:
-        args.outfile = f"{args.input_file[:-4]}.nc"
-    make_netcdf(args.input_file, out_file = args.outfile, skiprows = args.skiprows)
+    make_ozone_netcdf(args.input_file, out_file = args.outfile, skiprows = args.skiprows)
