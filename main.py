@@ -15,7 +15,7 @@ def make_ozone_netcdf(in_file, out_file = 'ozone_box_interview_data.nc', skiprow
                          Data in top rows used for attributes, see expected_format below. Default 5.
      expected_format - bool. If top rows are in expected format, use data for global attributes.
                          Expected format is: top row - instrument name, second row - contact name, 
-                                             third row - description, fourth row - creator.
+                                             third row - description, fourth row - file creator.
                          If false, attributes are ommited with the exception of a default title, 
                          Ozone Concentration Data. Default true.
     Output
@@ -29,7 +29,7 @@ def make_ozone_netcdf(in_file, out_file = 'ozone_box_interview_data.nc', skiprow
     df = pd.read_csv(in_file, skiprows = skiprows)
     df['Time (UTC)'] = pd.to_datetime(df['Time (UTC)'], utc = True, dayfirst = True, infer_datetime_format=True)
     seconds = [((h.hour * 3600) + (h.minute * 60) + (h.second)) for h in df['Time (UTC)']]
-    df = df.assign(seconds_past_midnight=seconds)
+    df = df.assign(seconds_past_midnight = seconds)
 
     # get data start and end dates and times
     start_data_date = df['Time (UTC)'][0].strftime('%Y-%m-%d')
@@ -38,7 +38,7 @@ def make_ozone_netcdf(in_file, out_file = 'ozone_box_interview_data.nc', skiprow
     end_data_time = df['Time (UTC)'].iloc[-1].strftime('%H:%M:%S')
 
     # get quality control values and meanings
-    qc_vals = sorted(set(df['Quality Control Falg Value']))
+    qc_vals = sorted(set(df['Quality Control Falg Value']))  # yes, Falg not Flag!
     qc_meanings = []
     for val in qc_vals:
         val_index = df.loc[df['Quality Control Falg Value'] == val].index[0]
@@ -89,5 +89,6 @@ if __name__ == "__main__":
     parser.add_argument('input_file', type = str, help = 'Name of CSV file to convert')
     parser.add_argument('-o', '--outfile', type = str, default = 'ozone_box_interview_data.nc', help = 'Name of netCDF file to be created. Default is ozone_box_interview_data.nc')
     parser.add_argument('-s', '--skiprows', type = int, default = 5, help = 'Number of rows in input file to skip before data headers. Default = 5')
+    parser.add_argument('-e', '--expected-format', action = 'store_true', help = 'Data in top rows are in expected format. Default = True.')
     args = parser.parse_args()
-    make_ozone_netcdf(args.input_file, out_file = args.outfile, skiprows = args.skiprows)
+    make_ozone_netcdf(args.input_file, out_file = args.outfile, skiprows = args.skiprows, expected_format = args.expected_format)
